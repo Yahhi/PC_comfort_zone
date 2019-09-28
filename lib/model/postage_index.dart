@@ -1,8 +1,8 @@
 class PostageIndex {
   static const TABLE_NAME = "posture_rates";
-  static const COLUMN_RATE = "rate";
   static const COLUMN_ID = "id";
   static const COLUMN_FIXED_AT = "fixed_at";
+  static const COLUMN_RATE = "rate";
   static const COLUMNS = [COLUMN_ID, COLUMN_FIXED_AT, COLUMN_RATE];
 
   static const CREATE_EXPRESSION = '''

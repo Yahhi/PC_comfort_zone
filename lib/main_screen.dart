@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:math';
+import 'dart:io' as Io;
 
 import 'package:camera/camera.dart';
 import 'package:dio/dio.dart';
@@ -7,9 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:health_app/bloc/preferences_provider.dart';
 import 'package:health_app/bloc/status_checker.dart';
 import 'package:health_app/constants/app_colors.dart';
+import 'package:health_app/exercise_screen.dart';
 import 'package:health_app/model/posture.dart';
 import 'package:health_app/widget/header_text.dart';
 import 'package:health_app/widget/slider_track_shape.dart';
+import 'package:image/image.dart' as ImageResizer;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -18,8 +20,18 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   static const UPLOAD_URL = "http://23.101.74.30/mobile/upload/";
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    //0 - resumed, 1 - inactive, 2 - paused.
+    if (state.index == AppLifecycleState.paused.index) {
+      _pauseCameraAndConnections();
+    } else if (state.index == AppLifecycleState.resumed.index) {
+      _resumeCameraAndConnections();
+    }
+  }
 
   CameraDescription firstCamera;
   CameraController _cameraController;
@@ -35,15 +47,17 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void initState() {
+    super.initState();
     controller.addListener(_onPageChange);
     _initCamera();
-    super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
     controller.removeListener(_onPageChange);
     _currentImageSender.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -99,7 +113,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: PageView(
         controller: controller,
-        children: <Widget>[_profile, _mainWidget(), _settings],
+        children: <Widget>[_profile, _mainWidget(context), _settings],
       ),
     );
   }
@@ -110,7 +124,7 @@ class _MainScreenState extends State<MainScreen> {
     ],
   );
 
-  Widget _mainWidget() {
+  Widget _mainWidget(BuildContext context) {
     return Stack(
       children: <Widget>[
         Column(
@@ -119,18 +133,17 @@ class _MainScreenState extends State<MainScreen> {
               padding: EdgeInsets.symmetric(horizontal: 60, vertical: 16),
               child: StreamBuilder<Postage>(
                 stream: _statusChecker.postage,
-                initialData: Postage(
-                    Point(1, 0), Point(-1, 0), Point(0, 1), Point(0, -5)),
+                initialData: Postage("none", 0),
                 builder:
                     (BuildContext context, AsyncSnapshot<Postage> posture) {
                   int postureIndex = posture.data.index;
-                  if (postureIndex > 1.5)
+                  if (postureIndex == 2)
                     return Image.asset("assets/angle_right_bottom.png");
-                  if (postureIndex > 0.5)
+                  if (postureIndex == 1)
                     return Image.asset("assets/angle_right_top.png");
-                  if (postureIndex < -1.5)
+                  if (postureIndex == -1)
                     return Image.asset("assets/angle_left_top.png");
-                  if (postureIndex < -0.5)
+                  if (postureIndex == -2)
                     return Image.asset("assets/angle_right_top.png");
                   return Image.asset("assets/no_angle.png");
                 },
@@ -145,10 +158,15 @@ class _MainScreenState extends State<MainScreen> {
                   children: <Widget>[
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Image.asset(
-                        "assets/avatar.png",
-                        width: 40,
-                        height: 40,
+                      child: GestureDetector(
+                        onTap: () {
+                          _openExercise(context);
+                        },
+                        child: Image.asset(
+                          "assets/avatar.png",
+                          width: 40,
+                          height: 40,
+                        ),
                       ),
                     ),
                     Column(
@@ -160,11 +178,11 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                         StreamBuilder<Postage>(
                           stream: _statusChecker.postage,
-                          initialData: Postage(Point(1, 0), Point(-1, 0),
-                              Point(0, 1), Point(0, -5)),
+                          initialData: Postage("none", 0),
                           builder: (BuildContext context,
                               AsyncSnapshot<Postage> posture) {
                             int postureIndex = posture.data.index;
+                            print("found posture index is $postureIndex");
                             if (postureIndex > 0.5 || postureIndex < -0.5)
                               return Text(
                                 "Нежелательная поза",
@@ -325,6 +343,14 @@ class _MainScreenState extends State<MainScreen> {
     print("sending picture");
     String uid = await PreferencesProvider().getUid();
     print("uid is $uid");
+
+    ImageResizer.Image image =
+        ImageResizer.decodeImage(new Io.File(filePath).readAsBytesSync());
+    // Resize the image to a 120x? thumbnail (maintaining the aspect ratio).
+    ImageResizer.Image thumbnail = ImageResizer.copyResize(image, width: 240);
+
+    new Io.File(filePath)..writeAsBytesSync(ImageResizer.encodeJpg(thumbnail));
+
     Dio dio = new Dio();
     MultipartFile file =
         await MultipartFile.fromFile(filePath, filename: filename);
@@ -337,7 +363,27 @@ class _MainScreenState extends State<MainScreen> {
                 method: 'POST',
                 responseType: ResponseType.plain // or ResponseType.JSON
                 ))
-        .then((response) => print(response))
-        .catchError((error) => print(error));
+        .then((response) {
+      print(response);
+    }).catchError((error) => print(error));
+  }
+
+  void _openExercise(BuildContext context) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => ExerciseScreen()));
+  }
+
+  void _pauseCameraAndConnections() {
+    setState(() {
+      _cameraVisible = false;
+    });
+    _statusChecker.cancelConnections();
+  }
+
+  void _resumeCameraAndConnections() {
+    setState(() {
+      _cameraVisible = true;
+    });
+    _statusChecker.resumeConnections();
   }
 }

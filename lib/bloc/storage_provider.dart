@@ -35,8 +35,8 @@ class StorageProvider {
     }
 
     db = await openDatabase(dbPath, version: 3,
-        onCreate: (Database db, int version) async {
-      await db.batch()
+        onCreate: (Database db, int version) {
+      db.batch()
         ..execute(PostageIndex.CREATE_EXPRESSION)
         ..commit();
     });

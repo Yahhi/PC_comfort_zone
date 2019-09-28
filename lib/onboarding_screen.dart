@@ -95,7 +95,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Column(
                 children: <Widget>[
                   HeaderText(
-                    "Следим за позой",
+                    "Следит за позой",
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      "Определяем нарушения в позе. Заботимся о вашей осанке.",
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                   BlueButton(
                     "ДАЛЕЕ",
@@ -125,7 +132,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: EdgeInsets.symmetric(horizontal: _HORIZONTAL_PADDING),
               child: Column(
                 children: <Widget>[
-                  HeaderText("Следим за средой"),
+                  HeaderText("Следит за окружающей средой"),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      "Замеряем уровень CO2 в пространстве. Заботимся о вашем самочувствии.",
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                   BlueButton(
                     "ДАЛЕЕ",
                     _showNextPage,
@@ -153,7 +167,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               flex: _BOTTOM_PROPORTION,
               child: Column(
                 children: <Widget>[
-                  HeaderText("Следим за освещением"),
+                  HeaderText("Следит за освещением рабочего места"),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      "Замеряем уровень Lux. Заботимся о вашем зрении.",
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                   BlueButton(
                     "ДАЛЕЕ",
                     () {
