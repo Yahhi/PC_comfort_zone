@@ -28,8 +28,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     //0 - resumed, 1 - inactive, 2 - paused.
     if (state.index == AppLifecycleState.paused.index) {
       _pauseCameraAndConnections();
+      _currentImageSender.cancel();
     } else if (state.index == AppLifecycleState.resumed.index) {
       _resumeCameraAndConnections();
+      _takePictureAndSleep();
     }
   }
 
@@ -136,7 +138,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 initialData: Postage("none", 0),
                 builder:
                     (BuildContext context, AsyncSnapshot<Postage> posture) {
-                  int postureIndex = posture.data.index;
+                  int postureIndex = posture.data.imageIndex;
                   if (postureIndex == 2)
                     return Image.asset("assets/angle_right_bottom.png");
                   if (postureIndex == 1)
@@ -178,19 +180,19 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                         ),
                         StreamBuilder<Postage>(
                           stream: _statusChecker.postage,
-                          initialData: Postage("none", 0),
+                          initialData: Postage("left", 0),
                           builder: (BuildContext context,
                               AsyncSnapshot<Postage> posture) {
-                            int postureIndex = posture.data.index;
+                            int postureIndex = posture.data.imageIndex;
                             print("found posture index is $postureIndex");
-                            if (postureIndex > 0.5 || postureIndex < -0.5)
+                            if (postureIndex == 0)
                               return Text(
-                                "Нежелательная поза",
-                                style: TextStyle(color: AppColors.PINK),
+                                "Отличная поза",
+                                style: TextStyle(color: AppColors.GREEN),
                               );
                             return Text(
-                              "Отличная поза",
-                              style: TextStyle(color: AppColors.GREEN),
+                              "Нежелательная поза",
+                              style: TextStyle(color: AppColors.PINK),
                             );
                           },
                         ),
