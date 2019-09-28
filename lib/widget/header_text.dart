@@ -18,9 +18,9 @@ class HeaderText extends StatelessWidget {
       child: Text(
         _text,
         textAlign: TextAlign.center,
-        textScaleFactor: 2.0,
+        textScaleFactor: 1.5,
         style: TextStyle(
-          color: color ?? AppColors.GREEN,
+          color: color ?? AppColors.BLUE,
           fontWeight: FontWeight.bold,
         ),
       ),
