@@ -8,4 +8,5 @@ class AppColors {
   static const GREENISH = Color(0xFFB1E6A1);
   static const BACKGROUND = Color(0xFFFFFFFF);
   static const WHITE = Color(0xFFFFFFFF);
+  static const PINK = Color(0xFFFF00FF);
 }

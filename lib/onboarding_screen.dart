@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_app/bloc/preferences_provider.dart';
 import 'package:health_app/widget/blue_button.dart';
 import 'package:health_app/widget/header_text.dart';
 import 'package:page_indicator/page_indicator.dart';
@@ -156,6 +157,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   BlueButton(
                     "ДАЛЕЕ",
                     () {
+                      PreferencesProvider().saveFirstRunFinished();
                       Navigator.of(context).pop();
                     },
                   )

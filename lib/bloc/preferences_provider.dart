@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 class PreferencesProvider {
   static const KEY_FIRST_RUN = "first_run";
@@ -31,5 +32,15 @@ class PreferencesProvider {
 
   Future _initPreferences() async {
     _preferences = await SharedPreferences.getInstance();
+  }
+
+  Future<String> getUid() async {
+    await _initialized;
+    String result = _preferences.getString(KEY_UID);
+    if (result == null) {
+      result = Uuid().v4();
+      _preferences.setString(KEY_UID, result);
+    }
+    return result;
   }
 }
