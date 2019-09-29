@@ -9,11 +9,13 @@ import 'package:health_app/bloc/status_checker.dart';
 import 'package:health_app/constants/app_colors.dart';
 import 'package:health_app/exercise_screen.dart';
 import 'package:health_app/model/posture.dart';
+import 'package:health_app/settings_part.dart';
 import 'package:health_app/widget/header_text.dart';
 import 'package:health_app/widget/slider_track_shape.dart';
 import 'package:image/image.dart' as ImageResizer;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:wakelock/wakelock.dart';
 
 class MainScreen extends StatefulWidget {
   @override
@@ -29,9 +31,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     if (state.index == AppLifecycleState.paused.index) {
       _pauseCameraAndConnections();
       _currentImageSender.cancel();
+      Wakelock.disable();
     } else if (state.index == AppLifecycleState.resumed.index) {
       _resumeCameraAndConnections();
       _takePictureAndSleep();
+      Wakelock.enable();
     }
   }
 
@@ -52,6 +56,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     super.initState();
     controller.addListener(_onPageChange);
     _initCamera();
+    Wakelock.enable();
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -302,11 +307,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
   }
 
-  Widget _settings = Column(
-    children: <Widget>[
-      HeaderText("Settings"),
-    ],
-  );
+  Widget _settings = new SettingsPart();
 
   void _showSettings() {
     controller.jumpToPage(2);

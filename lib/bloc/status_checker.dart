@@ -44,8 +44,9 @@ class StatusChecker {
 
   void _getDataFromServer(Timer timer) async {
     print("let's get data from server");
+    PreferencesProvider preferencesProvider = PreferencesProvider();
     if (uid == null) {
-      uid = await PreferencesProvider().getUid();
+      uid = await preferencesProvider.getUid();
       print("id is $uid");
     }
     Response response;
@@ -65,13 +66,13 @@ class StatusChecker {
     int lux = subMap["lux"];
 
     String textToRead = "";
-    if (co2 > 1000) {
+    if (co2 > 1000 && await preferencesProvider.getCO2Setting()) {
       textToRead += "Пора проветрить комнату. ";
     }
-    if (humidity < 45) {
+    if (humidity < 45 && await preferencesProvider.getHumiditySetting()) {
       textToRead += "Воздух слишком сухой, надо включить увлажнитель. ";
     }
-    if (lux < 300) {
+    if (lux < 300 && await preferencesProvider.getLightSetting()) {
       textToRead += "Включите дополнительное освещение. ";
     }
     String postureMessage = p.getCorrectingMessage();
@@ -79,7 +80,14 @@ class StatusChecker {
       textToRead += postureMessage;
     }
 
-    _airController.add(((1300 - co2) / 6).round());
+    int qualityVisible = ((1300 - co2) / 6).round();
+    if (qualityVisible < 0) {
+      qualityVisible = 0;
+    }
+    if (qualityVisible > 100) {
+      qualityVisible = 100;
+    }
+    _airController.add(qualityVisible);
     _temperatureController.add(temperature.round());
     _lightController.add(lux >= 300);
     _postageController.add(p);
@@ -99,5 +107,6 @@ class StatusChecker {
   void resumeConnections() {
     _statusCheckerExecutor =
         new Timer.periodic(Duration(seconds: 30), _getDataFromServer);
+    _getDataFromServer(null);
   }
 }
